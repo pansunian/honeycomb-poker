@@ -78,6 +78,7 @@ const els = {
   playerList: document.querySelector("#playerList"),
   spadeIntel: document.querySelector("#spadeIntel"),
   jokerIntel: document.querySelector("#jokerIntel"),
+  boardStage: document.querySelector("#boardStage"),
   hexBoard: document.querySelector("#hexBoard"),
   roleSummary: document.querySelector("#roleSummary"),
   actionArea: document.querySelector("#actionArea"),
@@ -85,6 +86,8 @@ const els = {
   logList: document.querySelector("#logList"),
   resetBtn: document.querySelector("#resetBtn"),
 };
+
+const BOARD_SIZE = { width: 840, height: 790 };
 
 function shuffle(items) {
   const copy = [...items];
@@ -915,6 +918,23 @@ function tileStyle(row, col) {
   };
 }
 
+function syncViewportHeight() {
+  document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
+}
+
+function updateBoardScale() {
+  const wrap = els.boardStage?.parentElement;
+  if (!wrap || !els.boardStage) return;
+  const scale = Math.min(
+    1,
+    Math.max(0.42, (wrap.clientWidth - 4) / BOARD_SIZE.width),
+    Math.max(0.42, (wrap.clientHeight - 4) / BOARD_SIZE.height),
+  );
+  els.boardStage.style.setProperty("--board-scale", scale.toFixed(3));
+  els.boardStage.style.setProperty("--board-width", `${Math.ceil(BOARD_SIZE.width * scale)}px`);
+  els.boardStage.style.setProperty("--board-height", `${Math.ceil(BOARD_SIZE.height * scale)}px`);
+}
+
 function renderBoard() {
   els.hexBoard.innerHTML = "";
   boardRows.forEach((cols, row) => {
@@ -949,6 +969,7 @@ function renderBoard() {
     });
   });
   renderPiece();
+  requestAnimationFrame(updateBoardScale);
 }
 
 function renderPiece() {
@@ -1208,5 +1229,19 @@ function render() {
   scheduleTalkReveal();
 }
 
+window.addEventListener("resize", () => {
+  syncViewportHeight();
+  updateBoardScale();
+});
+window.addEventListener("orientationchange", () => {
+  syncViewportHeight();
+  requestAnimationFrame(updateBoardScale);
+});
+window.visualViewport?.addEventListener("resize", () => {
+  syncViewportHeight();
+  updateBoardScale();
+});
+
+syncViewportHeight();
 els.resetBtn.addEventListener("click", resetGame);
 resetGame();
