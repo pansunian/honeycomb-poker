@@ -32,7 +32,7 @@ body {
   color: var(--text);
   background:
     linear-gradient(rgba(12, 14, 13, 0.5), rgba(12, 14, 13, 0.84)),
-    url("../reference-1691.png") center / cover,
+    url("./assets/table-reference.jpg") center / cover,
     var(--bg);
 }
 button { font: inherit; }
