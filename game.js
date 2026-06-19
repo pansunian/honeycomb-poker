@@ -553,9 +553,13 @@ function confirmNewKnight() {
   if (!id) return;
   state.roles.knight = id;
   state.selectedPlayers = new Set();
-  state.phase = "knightChoice";
-  addLog(`国王重新选择 ${playerName(id)} 为骑士，继续处理当前两张牌。`);
+  state.flashingCourtIds = new Set([state.roles.queen, state.roles.knight].filter(Boolean));
+  state.offers = { king: [], queen: [] };
+  state.choices = { king: null, queen: null, knight: null };
+  state.phase = "courtReveal";
+  addLog(`国王重新选择 ${playerName(id)} 为骑士。上一组牌作废，国王和王后将重新发牌。`);
   render();
+  startCourtRevealTimer();
 }
 
 function chooseRoyalCard(role, faction) {
@@ -566,6 +570,8 @@ function chooseRoyalCard(role, faction) {
 }
 
 function chooseKnightCard(faction) {
+  const knight = state.players.find((player) => player.id === state.roles.knight);
+  if (!knight || knight.sacrificed) return;
   state.choices.knight = faction;
   addLog(`骑士打出${factionName(faction)}牌，棋子沿${factionName(faction)}箭头移动。`);
   movePiece(faction);
@@ -577,8 +583,10 @@ function sacrificeKnight() {
   knight.sacrificed = true;
   state.roles.knight = null;
   state.selectedPlayers = new Set();
+  state.offers = { king: [], queen: [] };
+  state.choices = { king: null, queen: null, knight: null };
   state.phase = "reselectKnight";
-  addLog(`中后期：${knight.name} 触发骑士牺牲并直接淘汰，国王需要重新选择骑士。`);
+  addLog(`中后期：${knight.name} 触发骑士牺牲并直接淘汰，当前牌作废，国王需要重新选择骑士。`);
   render();
 }
 
@@ -1008,13 +1016,13 @@ function phaseCopy() {
     courtReveal: ["王后与骑士确认", "国王刚选出的王后和骑士会闪烁 5 秒。5 秒后，国王与王后各自收到暗牌。"],
     kingChoice: ["国王选择牌", "国王收到红桃、黑桃、小丑中的随机 2 张牌，可出现重复。AI 会思考 5 秒后选择。"],
     queenChoice: ["王后选择牌", "王后不知道国王的牌与选择，也从自己的 2 张牌中选择 1 张交给骑士。AI 会思考 5 秒后选择。"],
-    knightChoice: ["骑士打出牌", state.midgameUnlocked ? "中后期：骑士看到国王和王后交出的 2 张牌，可选择打出牌，也可牺牲自己并直接淘汰，让国王重选骑士。AI 会思考 5 秒后行动。" : "骑士看到国王和王后交出的 2 张牌，决定棋子走向。AI 会思考 5 秒后出牌。"],
+    knightChoice: ["骑士打出牌", state.midgameUnlocked ? "中后期：骑士看到国王和王后交出的 2 张牌，可选择打出牌，也可牺牲自己并直接淘汰。牺牲后这组牌作废，由国王重选骑士，并重新给国王和王后发牌。AI 会思考 5 秒后行动。" : "骑士看到国王和王后交出的 2 张牌，决定棋子走向。AI 会思考 5 秒后出牌。"],
     exchangeSkill: ["交换技能", "国王选择 3 名玩家提出交换方案。若 2 人反对，则下一人当国王重新提案。技能结算后的下一轮进入中后期。"],
     inspectSkill: ["查验技能", "国王选择 1 名玩家提出查验方案。查验结果在排除真实身份后的另外 2 个阵营中随机显示 1 个。技能结算后的下一轮进入中后期。"],
     decision: ["抉择表决", "其他玩家可各出 1 张反对票；当 2 人反对时，方案作废并由下一人当国王。"],
     discussion: ["全员发言", "棋子每走完一步，所有玩家都会按顺序发言。每 6 秒弹出下一条，是否结束讨论由玩家决定。"],
     jokerConvert: ["大王转化", "本回合骑士最终打出小丑牌。大王选择 1 名未被查验、且当前不是小丑阵营的玩家转化为小王。"],
-    reselectKnight: ["骑士淘汰", "骑士已牺牲并直接淘汰。国王需要从未淘汰、非国王、非王后的玩家中重新选择骑士。"],
+    reselectKnight: ["骑士淘汰", "骑士已牺牲并直接淘汰，当前两张牌作废。国王需要从未淘汰、非国王、非王后的玩家中重新选择骑士，随后国王和王后重新收牌。"],
     gameOver: ["游戏结束", "棋子已抵达阵营终点。"],
   };
   return map[state.phase];
@@ -1148,7 +1156,7 @@ function renderKnightChoices() {
         </button>
       `).join("")}
     </div>
-    ${state.midgameUnlocked ? `<div class="button-row"><button class="ghost-btn" id="sacrificeKnightBtn" type="button" ${canAct ? "" : "disabled"}>骑士牺牲并淘汰，国王重选骑士</button></div>` : ""}
+    ${state.midgameUnlocked ? `<div class="button-row"><button class="ghost-btn" id="sacrificeKnightBtn" type="button" ${canAct ? "" : "disabled"}>骑士牺牲并淘汰，当前牌作废</button></div>` : ""}
   `;
   document.querySelectorAll("[data-knight-card]").forEach((button) => button.addEventListener("click", () => chooseKnightCard(button.dataset.knightCard)));
   document.querySelector("#sacrificeKnightBtn")?.addEventListener("click", sacrificeKnight);
@@ -1212,7 +1220,7 @@ function renderReselectKnight() {
   const candidates = activePlayers().filter((player) => player.id !== state.roles.king && player.id !== state.roles.queen);
   els.skillArea.classList.remove("hidden");
   els.skillArea.innerHTML = `
-    <p class="copy">可选骑士：${candidates.length} 名。已淘汰玩家不可选择；新骑士会看到当前国王和王后已交出的两张牌。</p>
+    <p class="copy">可选骑士：${candidates.length} 名。已淘汰玩家不可选择；确认新骑士后，国王和王后会重新收到 2 张暗牌。</p>
     <p class="select-hint">新骑士：${playerNameStack([...state.selectedPlayers][0])}</p>
     <div class="button-row"><button class="primary-btn" id="confirmNewKnightBtn" type="button" ${state.roles.king === state.viewerId && state.selectedPlayers.size === 1 ? "" : "disabled"}>确认新骑士</button></div>
   `;
