@@ -25,10 +25,10 @@ const goalTiles = {
 };
 const skillTiles = { "5-1": "交换", "5-2": "交换", "6-0": "查验", "6-2": "查验" };
 const jokerArrowOverrides = {
-  "4-0": "spade",
+  "4-0": "heart",
   "5-0": "heart",
+  "4-2": "spade",
   "5-2": "spade",
-  "6-1": "heart",
 };
 
 const state = {
