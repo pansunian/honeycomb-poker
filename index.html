@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#161817" />
+    <title>蜂巢扑克阵营推理</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <section id="setupScreen" class="setup-screen" aria-label="选择玩家">
+      <div class="setup-panel">
+        <p class="eyebrow">开局选座</p>
+        <h1>选择你的玩家编号</h1>
+        <div id="setupSeats" class="setup-seats"></div>
+      </div>
+    </section>
+
+    <section id="identityModal" class="identity-modal hidden" aria-label="身份提示">
+      <div class="identity-card">
+        <p class="eyebrow">你的身份</p>
+        <strong id="identityText">身份</strong>
+        <em id="teammateHint" class="teammate-hint"></em>
+        <span id="identityCountdown">3 秒后收回</span>
+      </div>
+    </section>
+
+    <main id="gameShell" class="app-shell game-hidden">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">14 人阵营推理对战</p>
+          <h1>蜂巢扑克阵营推理</h1>
+        </div>
+        <div class="round-card">
+          <span>第 <b id="roundNo">1</b> 轮</span>
+          <strong id="phaseTitle">选出国王</strong>
+        </div>
+      </header>
+
+      <section class="layout">
+        <aside class="panel players-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">玩家身份</p>
+              <h2>14 名玩家</h2>
+            </div>
+            <button id="resetBtn" class="icon-btn" title="重新发牌">↻</button>
+          </div>
+          <div id="playerList" class="player-list"></div>
+          <div class="team-note">
+            <strong>黑桃互知</strong>
+            <span id="spadeIntel">开局后显示黑桃队友。</span>
+          </div>
+          <div class="team-note">
+            <strong>小王情报</strong>
+            <span id="jokerIntel">小王知道大王身份；王炸可选择自爆。</span>
+          </div>
+        </aside>
+
+        <section class="board-panel">
+          <div class="board-toolbar">
+            <div>
+              <p class="eyebrow">蜂巢地图</p>
+              <h2>竖版蜂巢：黑桃 3 终点 / 王牌居中 / 红桃 3 终点</h2>
+            </div>
+            <div class="legend">
+              <span><i class="heart"></i>红桃</span>
+              <span><i class="spade"></i>黑桃</span>
+              <span><i class="joker"></i>小丑</span>
+            </div>
+          </div>
+          <div class="board-wrap">
+            <div id="hexBoard" class="hex-board" aria-label="蜂巢棋盘"></div>
+          </div>
+        </section>
+
+        <aside class="panel action-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">本轮流程</p>
+              <h2 id="actionHeading">选出国王</h2>
+            </div>
+          </div>
+          <div id="roleSummary" class="role-summary"></div>
+          <div id="actionArea" class="action-area"></div>
+          <div id="skillArea" class="skill-area hidden"></div>
+          <div class="log-box">
+            <div class="log-title">记录</div>
+            <ol id="logList"></ol>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="./game.js"></script>
+  </body>
+</html>
