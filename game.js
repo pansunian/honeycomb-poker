@@ -887,7 +887,7 @@ function renderPlayers() {
 
     button.innerHTML = `
       <span class="avatar">${player.id}</span>
-      <span>
+      <span class="player-body">
         ${playerNameStack(player.id)}
         <small class="player-meta">${meta}</small>
       </span>
