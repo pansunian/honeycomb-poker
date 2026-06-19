@@ -190,24 +190,30 @@ function rotateKing(reason = "棋子移动后") {
 
 function createPlayers() {
   const identities = shuffle([
-    "heart", "heart", "heart", "heart", "heart", "heart", "heart",
-    "spade", "spade", "spade", "spade",
-    "joker", "joker", "joker",
+    { faction: "heart", jokerRank: "" },
+    { faction: "heart", jokerRank: "" },
+    { faction: "heart", jokerRank: "" },
+    { faction: "heart", jokerRank: "" },
+    { faction: "heart", jokerRank: "" },
+    { faction: "heart", jokerRank: "" },
+    { faction: "heart", jokerRank: "" },
+    { faction: "spade", jokerRank: "" },
+    { faction: "spade", jokerRank: "" },
+    { faction: "spade", jokerRank: "" },
+    { faction: "spade", jokerRank: "" },
+    { faction: "joker", jokerRank: "大王" },
+    { faction: "joker", jokerRank: "小王" },
+    { faction: "joker", jokerRank: "王炸" },
   ]);
-  state.players = identities.map((faction, index) => ({
+  state.players = identities.map((identity, index) => ({
     id: index + 1,
     name: `玩家 ${index + 1}`,
-    faction,
-    jokerRank: faction === "joker" ? null : "",
+    faction: identity.faction,
+    jokerRank: identity.jokerRank,
     inspected: false,
     sacrificed: false,
     objectionVotes: 2,
   }));
-
-  const jokers = state.players.filter((player) => player.faction === "joker");
-  if (jokers[0]) jokers[0].jokerRank = "大王";
-  if (jokers[1]) jokers[1].jokerRank = "小王";
-  if (jokers[2]) jokers[2].jokerRank = "王炸";
 }
 
 function resetGame() {
@@ -240,7 +246,7 @@ function resetGame() {
   resetProposal();
   state.log = [];
   createPlayers();
-  addLog("新局开始：7 名红桃、4 名黑桃、3 名王牌（大王、小王、王炸）已随机发放。");
+  addLog("新局开始：所有玩家身份已重新随机刷新，7 名红桃、4 名黑桃、3 名王牌（大王、小王、王炸）已发放。");
   showSetup();
 }
 
@@ -572,7 +578,7 @@ function sacrificeKnight() {
   state.roles.knight = null;
   state.selectedPlayers = new Set();
   state.phase = "reselectKnight";
-  addLog(`中后期：${knight.name} 触发骑士牺牲，国王需要重新选择骑士。`);
+  addLog(`中后期：${knight.name} 触发骑士牺牲并直接淘汰，国王需要重新选择骑士。`);
   render();
 }
 
@@ -882,7 +888,7 @@ function renderPlayers() {
       `反对票 ${player.objectionVotes}`,
       state.previousCourt.has(player.id) ? "<mark>本轮禁选</mark>" : "",
       player.inspected ? "<mark>已查验</mark>" : "",
-      player.sacrificed ? "<mark>已牺牲</mark>" : "",
+      player.sacrificed ? "<mark>已淘汰</mark>" : "",
     ].filter(Boolean).join("");
 
     button.innerHTML = `
@@ -1002,13 +1008,13 @@ function phaseCopy() {
     courtReveal: ["王后与骑士确认", "国王刚选出的王后和骑士会闪烁 5 秒。5 秒后，国王与王后各自收到暗牌。"],
     kingChoice: ["国王选择牌", "国王收到红桃、黑桃、小丑中的随机 2 张牌，可出现重复。AI 会思考 5 秒后选择。"],
     queenChoice: ["王后选择牌", "王后不知道国王的牌与选择，也从自己的 2 张牌中选择 1 张交给骑士。AI 会思考 5 秒后选择。"],
-    knightChoice: ["骑士打出牌", state.midgameUnlocked ? "中后期：骑士看到国王和王后交出的 2 张牌，可选择打出牌，也可牺牲自己让国王重选骑士。AI 会思考 5 秒后行动。" : "骑士看到国王和王后交出的 2 张牌，决定棋子走向。AI 会思考 5 秒后出牌。"],
+    knightChoice: ["骑士打出牌", state.midgameUnlocked ? "中后期：骑士看到国王和王后交出的 2 张牌，可选择打出牌，也可牺牲自己并直接淘汰，让国王重选骑士。AI 会思考 5 秒后行动。" : "骑士看到国王和王后交出的 2 张牌，决定棋子走向。AI 会思考 5 秒后出牌。"],
     exchangeSkill: ["交换技能", "国王选择 3 名玩家提出交换方案。若 2 人反对，则下一人当国王重新提案。技能结算后的下一轮进入中后期。"],
     inspectSkill: ["查验技能", "国王选择 1 名玩家提出查验方案。查验结果在排除真实身份后的另外 2 个阵营中随机显示 1 个。技能结算后的下一轮进入中后期。"],
     decision: ["抉择表决", "其他玩家可各出 1 张反对票；当 2 人反对时，方案作废并由下一人当国王。"],
     discussion: ["全员发言", "棋子每走完一步，所有玩家都会按顺序发言。每 6 秒弹出下一条，是否结束讨论由玩家决定。"],
     jokerConvert: ["大王转化", "本回合骑士最终打出小丑牌。大王选择 1 名未被查验、且当前不是小丑阵营的玩家转化为小王。"],
-    reselectKnight: ["骑士牺牲", "骑士已牺牲。国王需要从未牺牲、非国王、非王后的玩家中重新选择骑士。"],
+    reselectKnight: ["骑士淘汰", "骑士已牺牲并直接淘汰。国王需要从未淘汰、非国王、非王后的玩家中重新选择骑士。"],
     gameOver: ["游戏结束", "棋子已抵达阵营终点。"],
   };
   return map[state.phase];
@@ -1142,7 +1148,7 @@ function renderKnightChoices() {
         </button>
       `).join("")}
     </div>
-    ${state.midgameUnlocked ? `<div class="button-row"><button class="ghost-btn" id="sacrificeKnightBtn" type="button" ${canAct ? "" : "disabled"}>骑士牺牲，国王重选骑士</button></div>` : ""}
+    ${state.midgameUnlocked ? `<div class="button-row"><button class="ghost-btn" id="sacrificeKnightBtn" type="button" ${canAct ? "" : "disabled"}>骑士牺牲并淘汰，国王重选骑士</button></div>` : ""}
   `;
   document.querySelectorAll("[data-knight-card]").forEach((button) => button.addEventListener("click", () => chooseKnightCard(button.dataset.knightCard)));
   document.querySelector("#sacrificeKnightBtn")?.addEventListener("click", sacrificeKnight);
@@ -1206,7 +1212,7 @@ function renderReselectKnight() {
   const candidates = activePlayers().filter((player) => player.id !== state.roles.king && player.id !== state.roles.queen);
   els.skillArea.classList.remove("hidden");
   els.skillArea.innerHTML = `
-    <p class="copy">可选骑士：${candidates.length} 名。新骑士会看到当前国王和王后已交出的两张牌。</p>
+    <p class="copy">可选骑士：${candidates.length} 名。已淘汰玩家不可选择；新骑士会看到当前国王和王后已交出的两张牌。</p>
     <p class="select-hint">新骑士：${playerNameStack([...state.selectedPlayers][0])}</p>
     <div class="button-row"><button class="primary-btn" id="confirmNewKnightBtn" type="button" ${state.roles.king === state.viewerId && state.selectedPlayers.size === 1 ? "" : "disabled"}>确认新骑士</button></div>
   `;
